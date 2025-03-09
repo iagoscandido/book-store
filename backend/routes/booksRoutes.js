@@ -3,22 +3,27 @@ import { Book } from "../models/bookModel.js";
 
 const router = express.Router();
 
-// route for save new book
 router.post("/", async (req, res) => {
   try {
-    if (!req.body.title || !req.body.author || !req.body.publishYear) {
-      return res.status(400).send({
-        message: "send all required fields: title, author, publishYear",
-      });
+    const { title, author, publishYear } = req.body;
+    const errors = [];
+
+    if (!title || typeof title !== "string") {
+      errors.push("Title must be a non-empty string");
     }
-    const newBook = {
-      title: req.body.title,
-      author: req.body.author,
-      publishYear: req.body.publishYear,
-    };
+    if (!author || typeof author !== "string") {
+      errors.push("Author must be a non-empty string");
+    }
+    if (!publishYear || typeof publishYear !== "number") {
+      errors.push("PublishYear must be a valid number");
+    }
 
+    if (errors.length > 0) {
+      return res.status(400).json({ errors });
+    }
+
+    const newBook = { title, author, publishYear };
     const book = await Book.create(newBook);
-
     return res.status(201).send(book);
   } catch (error) {
     console.error(error);
@@ -26,7 +31,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// route for get all books
 router.get("/", async (req, res) => {
   try {
     const books = await Book.find({});
@@ -41,7 +45,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// route for get one book by id
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -55,16 +58,27 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// route for update a book
 router.put("/:id", async (req, res) => {
   try {
-    if (!req.body.title || !req.body.author || !req.body.publishYear) {
-      return res.status(400).send({
-        message: "send all required fields: title, author, publishYear",
-      });
+    const { title, author, publishYear } = req.body;
+    const errors = [];
+
+    if (title && typeof title !== "string") {
+      errors.push("Title must be a string");
     }
+    if (author && typeof author !== "string") {
+      errors.push("Author must be a string");
+    }
+    if (publishYear && typeof publishYear !== "number") {
+      errors.push("PublishYear must be a number");
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).json({ errors });
+    }
+
     const { id } = req.params;
-    const book = await Book.findByIdAndUpdate(id, req.body);
+    const book = await Book.findByIdAndUpdate(id);
 
     if (!book) {
       return res.status(404).json({ message: "book not found" });
